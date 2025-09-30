@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Leaf, Drumstick } from "lucide-react";
+import { Leaf, Drumstick, ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
 import tomatoSoup from "@/assets/menu-tomato-soup.jpg";
 import paneerCurry from "@/assets/menu-paneer-curry.jpg";
@@ -31,6 +31,10 @@ interface MenuItem {
   price: string;
   image: string;
   category: "veg" | "nonveg";
+}
+
+interface OrderItem extends MenuItem {
+  quantity: number;
 }
 
 const menuItems: MenuItem[] = [
@@ -188,15 +192,54 @@ const menuItems: MenuItem[] = [
 
 const Menu = () => {
   const [activeCategory, setActiveCategory] = useState<MenuCategory>("all");
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
 
   const filteredItems = menuItems.filter(
     (item) => activeCategory === "all" || item.category === activeCategory
   );
 
-  const handleOrder = (itemName: string) => {
-    toast.success(`${itemName} added to your order!`, {
-      description: "Scroll to Contact section to complete your order.",
+  const handleOrder = (item: MenuItem) => {
+    setOrderItems((prevOrders) => {
+      const existingItem = prevOrders.find((order) => order.id === item.id);
+      if (existingItem) {
+        return prevOrders.map((order) =>
+          order.id === item.id
+            ? { ...order, quantity: order.quantity + 1 }
+            : order
+        );
+      }
+      return [...prevOrders, { ...item, quantity: 1 }];
     });
+    toast.success(`${item.name} added to your order!`);
+  };
+
+  const updateQuantity = (id: number, delta: number) => {
+    setOrderItems((prevOrders) => {
+      return prevOrders
+        .map((order) =>
+          order.id === id
+            ? { ...order, quantity: Math.max(0, order.quantity + delta) }
+            : order
+        )
+        .filter((order) => order.quantity > 0);
+    });
+  };
+
+  const removeItem = (id: number) => {
+    setOrderItems((prevOrders) => prevOrders.filter((order) => order.id !== id));
+    toast.success("Item removed from order");
+  };
+
+  const clearOrder = () => {
+    setOrderItems([]);
+    toast.success("Order cleared");
+  };
+
+  const calculateTotal = () => {
+    return orderItems.reduce((total, item) => {
+      const price = parseInt(item.price.replace("₹", ""));
+      return total + price * item.quantity;
+    }, 0);
   };
 
   return (
@@ -286,7 +329,7 @@ const Menu = () => {
                     {item.price}
                   </span>
                   <Button
-                    onClick={() => handleOrder(item.name)}
+                    onClick={() => handleOrder(item)}
                     className={
                       item.category === "veg"
                         ? "bg-veg hover:bg-veg/90"
@@ -300,6 +343,113 @@ const Menu = () => {
             </Card>
           ))}
         </div>
+
+        {/* Order Details Section */}
+        {orderItems.length > 0 && (
+          <div className="mt-16 animate-in fade-in slide-in-from-bottom">
+            <Card className="p-6 bg-card">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold flex items-center gap-2">
+                  <ShoppingCart className="h-6 w-6 text-primary" />
+                  Order Details
+                </h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearOrder}
+                  className="text-destructive hover:bg-destructive/10"
+                >
+                  Clear All
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {orderItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-4 p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-20 h-20 object-cover rounded-lg"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-bold">{item.name}</h4>
+                        {item.category === "veg" ? (
+                          <Leaf className="h-4 w-4 text-veg" />
+                        ) : (
+                          <Drumstick className="h-4 w-4 text-nonveg" />
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {item.price} × {item.quantity}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateQuantity(item.id, -1)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="font-bold w-8 text-center">
+                          {item.quantity}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateQuantity(item.id, 1)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xl font-bold text-primary mb-2">
+                        ₹{parseInt(item.price.replace("₹", "")) * item.quantity}
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeItem(item.id)}
+                        className="text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 pt-6 border-t">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xl font-bold">Total:</span>
+                  <span className="text-3xl font-bold text-primary">
+                    ₹{calculateTotal()}
+                  </span>
+                </div>
+                <Button
+                  size="lg"
+                  className="w-full bg-primary hover:bg-primary/90"
+                  onClick={() => {
+                    toast.success("Redirecting to contact form...", {
+                      description: "Complete your order details below.",
+                    });
+                    document.getElementById("contact")?.scrollIntoView({
+                      behavior: "smooth",
+                    });
+                  }}
+                >
+                  Proceed to Checkout
+                </Button>
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
     </section>
   );
