@@ -8,9 +8,19 @@ import paneerCurry from "@/assets/menu-paneer-curry.jpg";
 import vegBiryani from "@/assets/menu-veg-biryani.jpg";
 import vegKorma from "@/assets/menu-veg-korma.jpg";
 import dalSoup from "@/assets/menu-dal-soup.jpg";
+import hotSourSoup from "@/assets/menu-hot-sour-soup.jpg";
+import palakPaneer from "@/assets/menu-palak-paneer.jpg";
+import dalMakhani from "@/assets/menu-dal-makhani.jpg";
+import mushroomMasala from "@/assets/menu-mushroom-masala.jpg";
+import malaiKofta from "@/assets/menu-malai-kofta.jpg";
 import chickenBiryani from "@/assets/menu-chicken-biryani.jpg";
 import dumBiryani from "@/assets/menu-dum-biryani.jpg";
 import chickenCurry from "@/assets/menu-chicken-curry.jpg";
+import chickenSoup from "@/assets/menu-chicken-soup.jpg";
+import muttonBiryani from "@/assets/menu-mutton-biryani.jpg";
+import butterChicken from "@/assets/menu-butter-chicken.jpg";
+import fishCurry from "@/assets/menu-fish-curry.jpg";
+import tandooriChicken from "@/assets/menu-tandoori-chicken.jpg";
 
 type MenuCategory = "all" | "veg" | "nonveg";
 
@@ -24,6 +34,7 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
+  // Vegetarian Soups
   {
     id: 1,
     name: "Tomato Soup",
@@ -42,6 +53,15 @@ const menuItems: MenuItem[] = [
   },
   {
     id: 3,
+    name: "Hot & Sour Soup",
+    description: "Spicy and tangy vegetable soup",
+    price: "₹160",
+    image: hotSourSoup,
+    category: "veg",
+  },
+  // Vegetarian Curries
+  {
+    id: 4,
     name: "Paneer Butter Masala",
     description: "Rich and creamy cottage cheese curry",
     price: "₹280",
@@ -49,7 +69,15 @@ const menuItems: MenuItem[] = [
     category: "veg",
   },
   {
-    id: 4,
+    id: 5,
+    name: "Palak Paneer",
+    description: "Cottage cheese in fresh spinach gravy",
+    price: "₹270",
+    image: palakPaneer,
+    category: "veg",
+  },
+  {
+    id: 6,
     name: "Vegetable Korma",
     description: "Mixed vegetables in cashew cream sauce",
     price: "₹250",
@@ -57,15 +85,83 @@ const menuItems: MenuItem[] = [
     category: "veg",
   },
   {
-    id: 5,
+    id: 7,
+    name: "Dal Makhani",
+    description: "Black lentils in creamy butter sauce",
+    price: "₹240",
+    image: dalMakhani,
+    category: "veg",
+  },
+  {
+    id: 8,
+    name: "Mushroom Masala",
+    description: "Button mushrooms in spicy masala gravy",
+    price: "₹260",
+    image: mushroomMasala,
+    category: "veg",
+  },
+  {
+    id: 9,
+    name: "Malai Kofta",
+    description: "Vegetable dumplings in creamy gravy",
+    price: "₹290",
+    image: malaiKofta,
+    category: "veg",
+  },
+  // Vegetarian Biryani
+  {
+    id: 10,
     name: "Vegetable Biryani",
     description: "Aromatic basmati rice with mixed vegetables",
     price: "₹220",
     image: vegBiryani,
     category: "veg",
   },
+  // Non-Vegetarian Soups
   {
-    id: 6,
+    id: 11,
+    name: "Chicken Soup",
+    description: "Clear chicken broth with vegetables",
+    price: "₹180",
+    image: chickenSoup,
+    category: "nonveg",
+  },
+  // Non-Vegetarian Curries
+  {
+    id: 12,
+    name: "Butter Chicken",
+    description: "Tandoori chicken in creamy tomato gravy",
+    price: "₹340",
+    image: butterChicken,
+    category: "nonveg",
+  },
+  {
+    id: 13,
+    name: "Spicy Chicken Curry",
+    description: "Authentic spicy chicken curry with bone",
+    price: "₹300",
+    image: chickenCurry,
+    category: "nonveg",
+  },
+  {
+    id: 14,
+    name: "Fish Curry",
+    description: "Kerala style fish in coconut curry",
+    price: "₹360",
+    image: fishCurry,
+    category: "nonveg",
+  },
+  {
+    id: 15,
+    name: "Tandoori Chicken",
+    description: "Charcoal grilled chicken with spices",
+    price: "₹320",
+    image: tandooriChicken,
+    category: "nonveg",
+  },
+  // Non-Vegetarian Biryani
+  {
+    id: 16,
     name: "Chicken Biryani",
     description: "Tender chicken with fragrant basmati rice",
     price: "₹320",
@@ -73,7 +169,7 @@ const menuItems: MenuItem[] = [
     category: "nonveg",
   },
   {
-    id: 7,
+    id: 17,
     name: "Dum Biryani",
     description: "Slow-cooked biryani sealed with dough",
     price: "₹380",
@@ -81,11 +177,11 @@ const menuItems: MenuItem[] = [
     category: "nonveg",
   },
   {
-    id: 8,
-    name: "Spicy Chicken Curry",
-    description: "Authentic spicy chicken curry with bone",
-    price: "₹300",
-    image: chickenCurry,
+    id: 18,
+    name: "Mutton Biryani",
+    description: "Tender lamb with aromatic spices and rice",
+    price: "₹420",
+    image: muttonBiryani,
     category: "nonveg",
   },
 ];

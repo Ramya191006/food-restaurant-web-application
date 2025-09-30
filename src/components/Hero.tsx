@@ -56,10 +56,7 @@ const Hero = () => {
       ))}
 
       {/* Overlay Gradient */}
-      <div
-        className="absolute inset-0"
-        style={{ background: "var(--gradient-hero)" }}
-      />
+      <div className="absolute inset-0 bg-black/40" />
 
       {/* Content */}
       <div className="relative z-10 h-full flex items-center justify-center text-center px-4">
