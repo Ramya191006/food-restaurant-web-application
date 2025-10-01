@@ -8,29 +8,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const signupSchema = z.object({
+const mobileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  mobile: z.string().regex(/^\d{10}$/, "Mobile number must be 10 digits"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  mobile: z.string().regex(/^[6-9]\d{9}$/, "Enter valid 10-digit mobile number"),
 });
 
-const loginSchema = z.object({
-  emailOrMobile: z.string().min(1, "Email or mobile number is required"),
-  password: z.string().min(1, "Password is required"),
+const otpSchema = z.object({
+  otp: z.string().length(6, "OTP must be 6 digits"),
 });
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [showOtpInput, setShowOtpInput] = useState(false);
   const navigate = useNavigate();
 
   // Form states
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
-  const [password, setPassword] = useState("");
-  const [emailOrMobile, setEmailOrMobile] = useState("");
+  const [otp, setOtp] = useState("");
 
   useEffect(() => {
     // Check if user is already logged in
@@ -43,58 +39,48 @@ const Auth = () => {
     checkUser();
   }, [navigate]);
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const validatedData = signupSchema.parse({ name, email, mobile, password });
+      const validatedData = mobileSchema.parse({ name, mobile });
       
-      const { error } = await supabase.auth.signUp({
-        email: validatedData.email,
-        password: validatedData.password,
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: `+91${validatedData.mobile}`,
         options: {
           data: {
             name: validatedData.name,
-            mobile: validatedData.mobile,
           },
-          emailRedirectTo: `${window.location.origin}/`,
         },
       });
 
       if (error) throw error;
 
-      toast.success("Account created successfully! Please log in.");
-      setIsLogin(true);
-      // Clear form
-      setName("");
-      setEmail("");
-      setMobile("");
-      setPassword("");
+      toast.success("OTP sent to your mobile number!");
+      setShowOtpInput(true);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         error.errors.forEach((err) => toast.error(err.message));
       } else {
-        toast.error(error.message || "Failed to create account");
+        toast.error(error.message || "Failed to send OTP");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const validatedData = loginSchema.parse({ emailOrMobile, password });
+      const validatedData = otpSchema.parse({ otp });
       
-      // Check if input is email or mobile
-      const isEmail = validatedData.emailOrMobile.includes("@");
-      
-      const { error } = await supabase.auth.signInWithPassword({
-        email: isEmail ? validatedData.emailOrMobile : `${validatedData.emailOrMobile}@temp.com`,
-        password: validatedData.password,
+      const { error } = await supabase.auth.verifyOtp({
+        phone: `+91${mobile}`,
+        token: validatedData.otp,
+        type: 'sms',
       });
 
       if (error) throw error;
@@ -105,7 +91,7 @@ const Auth = () => {
       if (error instanceof z.ZodError) {
         error.errors.forEach((err) => toast.error(err.message));
       } else {
-        toast.error(error.message || "Invalid credentials");
+        toast.error(error.message || "Invalid OTP");
       }
     } finally {
       setLoading(false);
@@ -124,106 +110,103 @@ const Auth = () => {
           </p>
         </div>
 
-        {isLogin ? (
-          <form onSubmit={handleLogin} className="space-y-4">
+        {!showOtpInput ? (
+          <form onSubmit={handleSendOtp} className="space-y-4">
+            {!isLogin && (
+              <div>
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your name"
+                  required
+                />
+              </div>
+            )}
             <div>
-              <Label htmlFor="emailOrMobile">Email or Mobile Number</Label>
-              <Input
-                id="emailOrMobile"
-                type="text"
-                value={emailOrMobile}
-                onChange={(e) => setEmailOrMobile(e.target.value)}
-                placeholder="Enter email or mobile"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password"
-                required
-              />
+              <Label htmlFor="mobile">Mobile Number</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  +91
+                </span>
+                <Input
+                  id="mobile"
+                  type="tel"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
+                  placeholder="10-digit mobile number"
+                  maxLength={10}
+                  className="pl-12"
+                  required
+                />
+              </div>
             </div>
             <Button
               type="submit"
               className="w-full"
               disabled={loading}
             >
-              {loading ? "Logging in..." : "Login"}
+              {loading ? "Sending OTP..." : "Send OTP"}
             </Button>
           </form>
         ) : (
-          <form onSubmit={handleSignup} className="space-y-4">
+          <form onSubmit={handleVerifyOtp} className="space-y-4">
             <div>
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="otp">Enter OTP</Label>
               <Input
-                id="name"
+                id="otp"
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your name"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                placeholder="6-digit OTP"
+                maxLength={6}
                 required
               />
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="mobile">Mobile Number</Label>
-              <Input
-                id="mobile"
-                type="tel"
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
-                placeholder="10-digit mobile number"
-                maxLength={10}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="signupPassword">Password</Label>
-              <Input
-                id="signupPassword"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimum 6 characters"
-                required
-              />
+              <p className="text-sm text-muted-foreground mt-2">
+                OTP sent to +91{mobile}
+              </p>
             </div>
             <Button
               type="submit"
               className="w-full"
               disabled={loading}
             >
-              {loading ? "Creating account..." : "Sign Up"}
+              {loading ? "Verifying..." : "Verify OTP"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setShowOtpInput(false);
+                setOtp("");
+              }}
+            >
+              Change Number
             </Button>
           </form>
         )}
 
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-primary hover:underline"
-          >
-            {isLogin
-              ? "Don't have an account? Sign up"
-              : "Already have an account? Login"}
-          </button>
-        </div>
+        {!showOtpInput && (
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setName("");
+                setMobile("");
+                setOtp("");
+              }}
+              className="text-primary hover:underline"
+            >
+              {isLogin
+                ? "Don't have an account? Sign up"
+                : "Already have an account? Login"}
+            </button>
+          </div>
+        )}
       </Card>
     </div>
   );
