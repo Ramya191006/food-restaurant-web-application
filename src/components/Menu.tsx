@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Leaf, Drumstick, ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
@@ -191,6 +192,7 @@ const menuItems: MenuItem[] = [
 ];
 
 const Menu = () => {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState<MenuCategory>("all");
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
 
@@ -436,12 +438,7 @@ const Menu = () => {
                   size="lg"
                   className="w-full bg-primary hover:bg-primary/90"
                   onClick={() => {
-                    toast.success("Redirecting to contact form...", {
-                      description: "Complete your order details below.",
-                    });
-                    document.getElementById("contact")?.scrollIntoView({
-                      behavior: "smooth",
-                    });
+                    navigate("/payment", { state: { orderItems } });
                   }}
                 >
                   Proceed to Checkout
