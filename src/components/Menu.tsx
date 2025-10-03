@@ -203,37 +203,47 @@ const Menu = () => {
   const handleOrder = (item: MenuItem) => {
     setOrderItems((prevOrders) => {
       const existingItem = prevOrders.find((order) => order.id === item.id);
-      if (existingItem) {
-        return prevOrders.map((order) =>
-          order.id === item.id
-            ? { ...order, quantity: order.quantity + 1 }
-            : order
-        );
-      }
-      return [...prevOrders, { ...item, quantity: 1 }];
+      const newOrders = existingItem
+        ? prevOrders.map((order) =>
+            order.id === item.id
+              ? { ...order, quantity: order.quantity + 1 }
+              : order
+          )
+        : [...prevOrders, { ...item, quantity: 1 }];
+      
+      localStorage.setItem('orderItems', JSON.stringify(newOrders));
+      return newOrders;
     });
     toast.success(`${item.name} added to your order!`);
   };
 
   const updateQuantity = (id: number, delta: number) => {
     setOrderItems((prevOrders) => {
-      return prevOrders
+      const newOrders = prevOrders
         .map((order) =>
           order.id === id
             ? { ...order, quantity: Math.max(0, order.quantity + delta) }
             : order
         )
         .filter((order) => order.quantity > 0);
+      
+      localStorage.setItem('orderItems', JSON.stringify(newOrders));
+      return newOrders;
     });
   };
 
   const removeItem = (id: number) => {
-    setOrderItems((prevOrders) => prevOrders.filter((order) => order.id !== id));
+    setOrderItems((prevOrders) => {
+      const newOrders = prevOrders.filter((order) => order.id !== id);
+      localStorage.setItem('orderItems', JSON.stringify(newOrders));
+      return newOrders;
+    });
     toast.success("Item removed from order");
   };
 
   const clearOrder = () => {
     setOrderItems([]);
+    localStorage.removeItem('orderItems');
     toast.success("Order cleared");
   };
 

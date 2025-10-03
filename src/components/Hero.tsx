@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, LogOut, User } from "lucide-react";
+import { ChevronRight, LogOut, User, ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import heroBiryani from "@/assets/hero-biryani.jpg";
@@ -13,6 +13,7 @@ const Hero = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [user, setUser] = useState<any>(null);
+  const [orderCount, setOrderCount] = useState(0);
   
   const slides = [
     { image: heroBiryani, alt: "Authentic Indian Biryani" },
@@ -47,8 +48,25 @@ const Hero = () => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
 
+    // Check for order count in localStorage
+    const checkOrderCount = () => {
+      const storedOrders = localStorage.getItem('orderItems');
+      if (storedOrders) {
+        const orders = JSON.parse(storedOrders);
+        const totalItems = orders.reduce((sum: number, item: any) => sum + item.quantity, 0);
+        setOrderCount(totalItems);
+      }
+    };
+    checkOrderCount();
+
+    // Listen for storage changes
+    window.addEventListener('storage', checkOrderCount);
+    const storageInterval = setInterval(checkOrderCount, 500);
+
     return () => {
       clearInterval(interval);
+      clearInterval(storageInterval);
+      window.removeEventListener('storage', checkOrderCount);
       subscription.unsubscribe();
     };
   }, [navigate]);
@@ -122,6 +140,19 @@ const Hero = () => {
             <button onClick={() => scrollToSection("contact")} className="text-white hover:text-white/80 transition-colors">
               Contact
             </button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={scrollToMenu}
+              className="text-white hover:text-white/80 hover:bg-white/10 relative"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {orderCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                  {orderCount}
+                </span>
+              )}
+            </Button>
             <div className="flex items-center gap-2">
               <User className="h-4 w-4 text-white" />
               <span className="text-white text-sm">{user?.user_metadata?.name || user?.email}</span>
