@@ -10,14 +10,20 @@ const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    mobile: "",
     message: "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email || !formData.message) {
+    if (!formData.name || !formData.email || !formData.mobile || !formData.message) {
       toast.error("Please fill in all fields");
+      return;
+    }
+
+    if (!/^[0-9]{10}$/.test(formData.mobile)) {
+      toast.error("Please enter a valid 10-digit mobile number");
       return;
     }
 
@@ -25,7 +31,7 @@ const Contact = () => {
       description: "We'll get back to you within 24 hours.",
     });
 
-    setFormData({ name: "", email: "", message: "" });
+    setFormData({ name: "", email: "", mobile: "", message: "" });
   };
 
   const handleChange = (
@@ -77,6 +83,21 @@ const Contact = () => {
                   placeholder="john@example.com"
                   value={formData.email}
                   onChange={handleChange}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="mobile" className="block text-sm font-medium mb-2">
+                  Mobile Number
+                </label>
+                <Input
+                  id="mobile"
+                  name="mobile"
+                  type="tel"
+                  placeholder="9876543210"
+                  value={formData.mobile}
+                  onChange={handleChange}
+                  maxLength={10}
                   required
                 />
               </div>

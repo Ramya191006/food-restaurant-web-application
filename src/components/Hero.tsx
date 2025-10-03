@@ -143,7 +143,7 @@ const Hero = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={scrollToMenu}
+              onClick={() => navigate("/orders")}
               className="text-white hover:text-white/80 hover:bg-white/10 relative"
             >
               <ShoppingCart className="h-5 w-5" />
