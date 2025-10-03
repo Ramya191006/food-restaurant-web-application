@@ -8,25 +8,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const mobileSchema = z.object({
+const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  mobile: z.string().regex(/^[6-9]\d{9}$/, "Enter valid 10-digit mobile number"),
+  email: z.string().email("Enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-const otpSchema = z.object({
-  otp: z.string().length(6, "OTP must be 6 digits"),
+const loginSchema = z.object({
+  email: z.string().email("Enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [showOtpInput, setShowOtpInput] = useState(false);
   const navigate = useNavigate();
 
   // Form states
   const [name, setName] = useState("");
-  const [mobile, setMobile] = useState("");
-  const [otp, setOtp] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     // Check if user is already logged in
@@ -39,15 +40,16 @@ const Auth = () => {
     checkUser();
   }, [navigate]);
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const validatedData = mobileSchema.parse({ name, mobile });
+      const validatedData = signupSchema.parse({ name, email, password });
       
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: `+91${validatedData.mobile}`,
+      const { error } = await supabase.auth.signUp({
+        email: validatedData.email,
+        password: validatedData.password,
         options: {
           data: {
             name: validatedData.name,
@@ -57,30 +59,30 @@ const Auth = () => {
 
       if (error) throw error;
 
-      toast.success("OTP sent to your mobile number!");
-      setShowOtpInput(true);
+      toast.success("Account created successfully! You can now login.");
+      setIsLogin(true);
+      setPassword("");
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         error.errors.forEach((err) => toast.error(err.message));
       } else {
-        toast.error(error.message || "Failed to send OTP");
+        toast.error(error.message || "Failed to create account");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const validatedData = otpSchema.parse({ otp });
+      const validatedData = loginSchema.parse({ email, password });
       
-      const { error } = await supabase.auth.verifyOtp({
-        phone: `+91${mobile}`,
-        token: validatedData.otp,
-        type: 'sms',
+      const { error } = await supabase.auth.signInWithPassword({
+        email: validatedData.email,
+        password: validatedData.password,
       });
 
       if (error) throw error;
@@ -91,7 +93,7 @@ const Auth = () => {
       if (error instanceof z.ZodError) {
         error.errors.forEach((err) => toast.error(err.message));
       } else {
-        toast.error(error.message || "Invalid OTP");
+        toast.error(error.message || "Invalid credentials");
       }
     } finally {
       setLoading(false);
@@ -110,103 +112,67 @@ const Auth = () => {
           </p>
         </div>
 
-        {!showOtpInput ? (
-          <form onSubmit={handleSendOtp} className="space-y-4">
-            {!isLogin && (
-              <div>
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter your name"
-                  required
-                />
-              </div>
-            )}
+        <form onSubmit={isLogin ? handleLogin : handleSignup} className="space-y-4">
+          {!isLogin && (
             <div>
-              <Label htmlFor="mobile">Mobile Number</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  +91
-                </span>
-                <Input
-                  id="mobile"
-                  type="tel"
-                  value={mobile}
-                  onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
-                  placeholder="10-digit mobile number"
-                  maxLength={10}
-                  className="pl-12"
-                  required
-                />
-              </div>
-            </div>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? "Sending OTP..." : "Send OTP"}
-            </Button>
-          </form>
-        ) : (
-          <form onSubmit={handleVerifyOtp} className="space-y-4">
-            <div>
-              <Label htmlFor="otp">Enter OTP</Label>
+              <Label htmlFor="name">Full Name</Label>
               <Input
-                id="otp"
+                id="name"
                 type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                placeholder="6-digit OTP"
-                maxLength={6}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter your name"
                 required
               />
-              <p className="text-sm text-muted-foreground mt-2">
-                OTP sent to +91{mobile}
-              </p>
             </div>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? "Verifying..." : "Verify OTP"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                setShowOtpInput(false);
-                setOtp("");
-              }}
-            >
-              Change Number
-            </Button>
-          </form>
-        )}
-
-        {!showOtpInput && (
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setName("");
-                setMobile("");
-                setOtp("");
-              }}
-              className="text-primary hover:underline"
-            >
-              {isLogin
-                ? "Don't have an account? Sign up"
-                : "Already have an account? Login"}
-            </button>
+          )}
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+            />
           </div>
-        )}
+          <div>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              required
+            />
+          </div>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading}
+          >
+            {loading ? (isLogin ? "Logging in..." : "Creating account...") : (isLogin ? "Login" : "Sign Up")}
+          </Button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setName("");
+              setEmail("");
+              setPassword("");
+            }}
+            className="text-primary hover:underline"
+          >
+            {isLogin
+              ? "Don't have an account? Sign up"
+              : "Already have an account? Login"}
+          </button>
+        </div>
       </Card>
     </div>
   );
